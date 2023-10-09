@@ -66,7 +66,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
 });
 
 // Execute the pandas data extraciton and upload the data to posgres or handle its outputs and errors
-const pythonProcess = spawn('python', ['something?.py']);
+const pythonProcess = spawn('python', ['./server/test.py']);
 
 
 // Print Python data
