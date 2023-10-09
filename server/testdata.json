@@ -1,0 +1,34 @@
+{
+    "data": [
+        {
+            "ID": "1",
+            "Year": "2016",
+            "UserGain": "80000",
+            "UserLost": "823"
+        },
+        {
+            "ID": "2",
+            "Year": "2017",
+            "UserGain": "45677",
+            "UserLost": "345"
+        },
+        {
+            "ID": "3",
+            "Year": "2018",
+            "UserGain": "78888",
+            "UserLost": "555"
+        },
+        {
+            "ID": "4",
+            "Year": "2019",
+            "UserGain": "90000",
+            "UserLost": "4555"
+        },
+        {
+            "ID": "5",
+            "Year": "2020",
+            "UserGain": "4300",
+            "UserLost": "234"
+        }
+    ]
+}
