@@ -47,8 +47,6 @@ app.get("/stream", (req, res) => {
   });
 });
 
-
-
 //File uploading!!!
 // Define the storage for uploaded files
 const storage = multer.diskStorage({
@@ -62,19 +60,19 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Handle file uploads
-app.post('/upload', upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
+// Handle file uploads for multiple files
+app.post('/upload', upload.array('files'), (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ error: 'No files uploaded' });
   }
 
-  // The uploaded file is available as req.file
-  const fileName = req.file.filename;
+  const fileNames = req.files.map((file) => file.filename);
 
   res.json({
-    file: `public/files/${fileName}`,
+    files: fileNames.map((fileName) => `public/files/${fileName}`),
   });
 });
+
 
 // // Execute the pandas data extraciton and upload the data to posgres or handle its outputs and errors
 // const pythonProcess = spawn('python', ['./server/test.py']);
