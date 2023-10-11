@@ -71,6 +71,8 @@ app.post('/upload', upload.array('files'), (req, res) => {
   res.json({
     files: fileNames.map((fileName) => `public/files/${fileName}`),
   });
+
+  console.log(`Recieved File`);
 });
 
 
