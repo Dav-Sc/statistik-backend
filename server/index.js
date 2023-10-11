@@ -30,6 +30,8 @@ app.get("/graph", (req, res) => {
   });
 });
 
+
+
 // Endpoint to get the stream data
 app.get("/stream", (req, res) => {
   // Read the specified JSON file and return its content
@@ -45,45 +47,53 @@ app.get("/stream", (req, res) => {
   });
 });
 
-// Configuration for file upload using multer
+
+
+//File uploading!!!
+// Define the storage for uploaded files
 const storage = multer.diskStorage({
-  // Define where the uploaded files will be saved
-  destination: function (req, file, cb) {
-    cb(null, './uploads/');
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, 'public', 'files')); // Specify the destination folder
   },
-  // Define the naming strategy for uploaded files can change it to be based off a pregession or something else
-  filename: function (req, file, cb) {
-    cb(null, file.originalname)
-  }
+  filename: (req, file, cb) => {
+    cb(null, file.originalname); // Use the original file name
+  },
 });
 
-// Create a multer instance with the defined storage
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
-// Endpoint to handle file uploads
+// Handle file uploads
 app.post('/upload', upload.single('file'), (req, res) => {
-  res.json({ message: 'File uploaded successfully' });
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  // The uploaded file is available as req.file
+  const fileName = req.file.filename;
+
+  res.json({
+    file: `public/files/${fileName}`,
+  });
 });
 
-// Execute the pandas data extraciton and upload the data to posgres or handle its outputs and errors
-const pythonProcess = spawn('python', ['./server/test.py']);
+// // Execute the pandas data extraciton and upload the data to posgres or handle its outputs and errors
+// const pythonProcess = spawn('python', ['./server/test.py']);
 
+// // Print Python data
+// pythonProcess.stdout.on('data', (data) => {
+//   console.log(`Python Output: ${data}`);
+// });
 
-// Print Python data
-pythonProcess.stdout.on('data', (data) => {
-  console.log(`Python Output: ${data}`);
-});
+// // Print Python errors
+// pythonProcess.stderr.on('data', (data) => {
+//   console.error(`Python Error: ${data}`);
+// });
 
-// Print Python errors
-pythonProcess.stderr.on('data', (data) => {
-  console.error(`Python Error: ${data}`);
-});
+// // Log when the Python script has finished executing
+// pythonProcess.on('close', (code) => {
 
-// Log when the Python script has finished executing
-pythonProcess.on('close', (code) => {
- 
-  console.log(`Python script exited with code ${code}`);
-});
+//   console.log(`Python script exited with code ${code}`);
+// });
 
 // Start the server and listen on the specified port
 app.listen(PORT, () => {
