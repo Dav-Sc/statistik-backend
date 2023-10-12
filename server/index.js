@@ -5,6 +5,8 @@ const path = require("path");
 const cors = require('cors');
 const multer = require('multer');
 const { spawn } = require('child_process');
+const { Client } = require("pg");
+
 
 // Set the port for the server. Use the environment variable or a default value
 const PORT = process.env.PORT || 3005;
@@ -69,7 +71,7 @@ app.post('/upload', upload.array('files'), (req, res) => {
   const fileNames = req.files.map((file) => file.filename);
 
   res.json({
-    files: fileNames.map((fileName) => `public/files/${fileName}`),
+    files: fileNames.map((fileName) => `uploads/${fileName}`),
   });
 
   console.log(`Recieved File`);
