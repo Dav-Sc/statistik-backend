@@ -17,7 +17,6 @@ const app = express();
 // Use the CORS middleware to allow cross-origin requests
 app.use(cors());
 
-
 const client = new Client({
   host: "localhost",
   user: "postgres",
@@ -26,21 +25,16 @@ const client = new Client({
   database: "Statistik",
 });
 
-
 client.connect();
 
-app.get('/data/:value', async (req, res) => {
-  const {value} = req.params; 
-  try {
-      const { rows } = await client.query(`SELECT * FROM ${value}`);
-      res.send(rows);
-      res.json(data)
-  } catch (error) {
-      console.error(error);
-      res.status(500).send('Server Error');
-  }
-});
+app.get('/data', async(req, res) => {
+  const databaseName = req.query.name;
+  const { rows } = await client.query(`SELECT * FROM ${databaseName}`);
+  res.send(rows);
+  console.log(`${rows}`)
+  // res.send(`You sent the query parameter id with the value: ${databaseName}`);
 
+});
 
 // Endpoint to get the graph data
 app.get("/graph", (req, res) => {
@@ -56,8 +50,6 @@ app.get("/graph", (req, res) => {
     res.send(data);
   });
 });
-
-
 
 // Endpoint to get the stream data
 app.get("/stream", (req, res) => {
