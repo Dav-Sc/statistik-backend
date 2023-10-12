@@ -17,6 +17,31 @@ const app = express();
 // Use the CORS middleware to allow cross-origin requests
 app.use(cors());
 
+
+const client = new Client({
+  host: "localhost",
+  user: "postgres",
+  port: 5432,
+  password: "root",
+  database: "Statistik",
+});
+
+
+client.connect();
+
+app.get('/data/:value', async (req, res) => {
+  const {value} = req.params; 
+  try {
+      const { rows } = await client.query(`SELECT * FROM ${value}`);
+      res.send(rows);
+      res.json(data)
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Server Error');
+  }
+});
+
+
 // Endpoint to get the graph data
 app.get("/graph", (req, res) => {
   // Read the specified JSON file and return its content
@@ -71,7 +96,7 @@ app.post('/upload', upload.array('files'), (req, res) => {
   const fileNames = req.files.map((file) => file.filename);
 
   res.json({
-    files: fileNames.map((fileName) => `uploads/${fileName}`),
+    files: fileNames.map((fileName) => `public/files/${fileName}`),
   });
 
   console.log(`Recieved File`);
