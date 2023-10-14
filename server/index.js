@@ -36,6 +36,85 @@ app.get('/data', async(req, res) => {
 
 });
 
+app.get('/totalviewdate', async(req, res) => {
+  const clientid = req.query.id;
+  const date = req.query.date;
+  console.log('clientid:', clientid);
+  console.log('date:', date); 
+  const { rows } = await client.query(`
+
+    SELECT trd.totalViews, tm.date
+    FROM tikTokRawData trd
+    INNER JOIN tikTokMaster tm ON trd.date = tm.date
+    WHERE tm.clientID = ${clientid}
+      AND tm.date = '${date}';
+  
+  `);
+  res.send(rows);
+  console.log(`${rows}`)
+  // res.send(`You sent the query parameter id with the value: ${databaseName}`);
+
+});
+
+app.post('/addclient', async(req, res) => {
+  const name = req.query.name;
+  console.log('name:', name); 
+  const { rows } = await client.query(`
+
+    INSERT INTO clientMaster (clientName)
+    VALUES ('${name}');
+  
+  `);
+  // res.send(rows);
+  console.log(`${rows}`)
+  // res.send(`You sent the query parameter id with the value: ${databaseName}`);
+
+});
+
+app.get('/getclients', async (req, res) => {
+  try {
+    const queryText = `
+    WITH ClientViews AS (
+      SELECT
+        cm.clientID,
+        cm.clientName,
+        SUM(trd.totalViews) AS totalViews
+      FROM
+        clientMaster cm
+      JOIN
+        tikTokMaster tm ON cm.clientID = tm.clientID
+      JOIN
+        tikTokRawData trd ON tm.date = trd.date
+      GROUP BY
+        cm.clientID
+    )
+    SELECT
+      cv.clientID,  -- Include clientID here
+      cv.clientName,
+      cv.totalViews,
+      MIN(tm.date) AS earliestDate
+    FROM
+      ClientViews cv
+    JOIN
+      tikTokMaster tm ON cv.clientID = tm.clientID
+    GROUP BY
+      cv.clientID,  -- Include clientID here
+      cv.clientName,
+      cv.totalViews;
+  `;
+    const { rows } = await client.query(queryText);
+    console.log(rows)
+    res.json(rows);
+    
+  } catch (error) {
+    console.error('Database query failed:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
+
+
 // Endpoint to get the graph data
 app.get("/graph", (req, res) => {
   // Read the specified JSON file and return its content
