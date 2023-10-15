@@ -1,0 +1,250 @@
+{
+    "LIVE_creation": [
+        {
+            "Date": "Jul 12, 2023",
+            "LIVE duration": 364,
+            "LIVE videos": 1
+        },
+        {
+            "Date": "Jul 13, 2023",
+            "LIVE duration": 1090,
+            "LIVE videos": 1
+        },
+        {
+            "Date": "Jul 14, 2023",
+            "LIVE duration": 5770,
+            "LIVE videos": 1
+        },
+        {
+            "Date": "Jul 27, 2023",
+            "LIVE duration": 999,
+            "LIVE videos": 1
+        },
+        {
+            "Date": "Jul 28, 2023",
+            "LIVE duration": 5406,
+            "LIVE videos": 2
+        },
+        {
+            "Date": "Aug 10, 2023",
+            "LIVE duration": 519,
+            "LIVE videos": 1
+        },
+        {
+            "Date": "Aug 11, 2023",
+            "LIVE duration": 6456,
+            "LIVE videos": 2
+        },
+        {
+            "Date": "Aug 24, 2023",
+            "LIVE duration": 28,
+            "LIVE videos": 2
+        },
+        {
+            "Date": "Aug 25, 2023",
+            "LIVE duration": 6683,
+            "LIVE videos": 1
+        },
+        {
+            "Date": "Sep 7, 2023",
+            "LIVE duration": 1014,
+            "LIVE videos": 1
+        },
+        {
+            "Date": "Sep 8, 2023",
+            "LIVE duration": 4949,
+            "LIVE videos": 1
+        }
+    ],
+    "LIVE_earning": [
+        {
+            "Date": "Jul 13, 2023",
+            "Diamonds": 33,
+            "Gifters": 5
+        },
+        {
+            "Date": "Jul 14, 2023",
+            "Diamonds": 858,
+            "Gifters": 37
+        },
+        {
+            "Date": "Jul 27, 2023",
+            "Diamonds": 3,
+            "Gifters": 1
+        },
+        {
+            "Date": "Jul 28, 2023",
+            "Diamonds": 3791,
+            "Gifters": 18
+        },
+        {
+            "Date": "Aug 10, 2023",
+            "Diamonds": 1,
+            "Gifters": 1
+        },
+        {
+            "Date": "Aug 11, 2023",
+            "Diamonds": 2706,
+            "Gifters": 31
+        },
+        {
+            "Date": "Aug 25, 2023",
+            "Diamonds": 1431,
+            "Gifters": 56
+        },
+        {
+            "Date": "Sep 7, 2023",
+            "Diamonds": 66,
+            "Gifters": 3
+        },
+        {
+            "Date": "Sep 8, 2023",
+            "Diamonds": 2032,
+            "Gifters": 45
+        }
+    ],
+    "LIVE_interaction": [
+        {
+            "Date": "Jul 13, 2023",
+            " New followers": 180,
+            "Viewers who commented": 420,
+            "Likes": 15220,
+            "Shares": 72
+        },
+        {
+            "Date": "Jul 14, 2023",
+            " New followers": 3250,
+            "Viewers who commented": 4569,
+            "Likes": 352800,
+            "Shares": 1522
+        },
+        {
+            "Date": "Jul 27, 2023",
+            " New followers": 25,
+            "Viewers who commented": 98,
+            "Likes": 3365,
+            "Shares": 40
+        },
+        {
+            "Date": "Jul 28, 2023",
+            " New followers": 1736,
+            "Viewers who commented": 2952,
+            "Likes": 195530,
+            "Shares": 1988
+        },
+        {
+            "Date": "Aug 10, 2023",
+            " New followers": 52,
+            "Viewers who commented": 138,
+            "Likes": 5182,
+            "Shares": 30
+        },
+        {
+            "Date": "Aug 11, 2023",
+            " New followers": 2379,
+            "Viewers who commented": 2533,
+            "Likes": 297017,
+            "Shares": 982
+        },
+        {
+            "Date": "Aug 25, 2023",
+            " New followers": 3837,
+            "Viewers who commented": 4649,
+            "Likes": 370423,
+            "Shares": 2224
+        },
+        {
+            "Date": "Sep 7, 2023",
+            " New followers": 182,
+            "Viewers who commented": 308,
+            "Likes": 21844,
+            "Shares": 60
+        },
+        {
+            "Date": "Sep 8, 2023",
+            " New followers": 1989,
+            "Viewers who commented": 2094,
+            "Likes": 242289,
+            "Shares": 869
+        }
+    ],
+    "LIVE_viewer": [
+        {
+            "Date": "Jul 12, 2023",
+            "Total views": 820,
+            "Unique viewers": 751,
+            "Average watch time": 2,
+            "Top viewer count": 41
+        },
+        {
+            "Date": "Jul 13, 2023",
+            "Total views": 20215,
+            "Unique viewers": 18465,
+            "Average watch time": 23,
+            "Top viewer count": 3348
+        },
+        {
+            "Date": "Jul 14, 2023",
+            "Total views": 206705,
+            "Unique viewers": 176242,
+            "Average watch time": 77,
+            "Top viewer count": 6319
+        },
+        {
+            "Date": "Jul 27, 2023",
+            "Total views": 2152,
+            "Unique viewers": 1844,
+            "Average watch time": 48,
+            "Top viewer count": 873
+        },
+        {
+            "Date": "Jul 28, 2023",
+            "Total views": 125517,
+            "Unique viewers": 108620,
+            "Average watch time": 65,
+            "Top viewer count": 6681
+        },
+        {
+            "Date": "Aug 10, 2023",
+            "Total views": 7482,
+            "Unique viewers": 6896,
+            "Average watch time": 13,
+            "Top viewer count": 2574
+        },
+        {
+            "Date": "Aug 11, 2023",
+            "Total views": 148500,
+            "Unique viewers": 125149,
+            "Average watch time": 76,
+            "Top viewer count": 5811
+        },
+        {
+            "Date": "Aug 24, 2023",
+            "Total views": 8,
+            "Unique viewers": 5,
+            "Average watch time": 0,
+            "Top viewer count": 734
+        },
+        {
+            "Date": "Aug 25, 2023",
+            "Total views": 207273,
+            "Unique viewers": 173695,
+            "Average watch time": 80,
+            "Top viewer count": 7906
+        },
+        {
+            "Date": "Sep 7, 2023",
+            "Total views": 16020,
+            "Unique viewers": 14599,
+            "Average watch time": 23,
+            "Top viewer count": 4228
+        },
+        {
+            "Date": "Sep 8, 2023",
+            "Total views": 155032,
+            "Unique viewers": 133659,
+            "Average watch time": 55,
+            "Top viewer count": 5736
+        }
+    ]
+}

@@ -1,45 +1,62 @@
+import os
+import zipfile
 import pandas as pd
+import json
 
-# Function to read data from either CSV or XLSX file
-def read_data(file_path):
-    if file_path.endswith('.xlsx'):
-        return pd.read_excel(file_path)
-    elif file_path.endswith('.csv'):
-        return pd.read_csv(file_path)
-    else:
-        raise ValueError("Unsupported file format. Please provide a .xlsx or .csv file.")
+# Define the folder where the zip files are located
+folder_path = "public/files"
 
-# Get the file path from the user
-file_path = input("Enter the path to the file (either .xlsx or .csv): ")
+# Define a function to process a CSV file and add rows with non-zero values in the 2nd and 3rd columns to an array
+def process_csv(zip_file_path, csv_filename):
+    data_array = []
 
-try:
-    # Read the data from the file into a Pandas DataFrame
-    df = read_data(file_path)
+    with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+        with zip_ref.open(csv_filename) as csv_file:
+            # Read the CSV file using Pandas
+            df = pd.read_csv(csv_file)
 
-    # Function to sort DataFrame based on user input
-    def sort_dataframe(df, columns, ascending=True):
+            # Filter rows where the 2nd and 3rd columns are not equal to zero
+            non_zero_rows = df[(df.iloc[:, 1] != 0) | (df.iloc[:, 2] != 0)]
+            
+            # Convert the filtered DataFrame to a list of dictionaries
+            data_array = non_zero_rows.to_dict(orient='records')
+
+    return data_array
+
+# Create a dictionary to store the data arrays
+data_dict = {}
+
+# Look for all files in the folder
+for filename in os.listdir(folder_path):
+    if filename.endswith(("_creation.zip", "_earning.zip", "_interaction.zip", "_viewer.zip")):
+        # Construct the full path to the zip file
+        zip_file_path = os.path.join(folder_path, filename)
+
         try:
-            sorted_df = df.sort_values(by=columns, ascending=ascending)
-            return sorted_df
-        except KeyError as e:
-            print(f"Column '{e.args[0]}' not found in DataFrame. Please enter valid column names.")
+            if "_creation.zip" in filename:
+                csv_filename = "LIVE_creation.csv"
+                key = "LIVE_creation"
+            elif "_earning.zip" in filename:
+                csv_filename = "LIVE_earning.csv"
+                key = "LIVE_earning"
+            elif "_interaction.zip" in filename:
+                csv_filename = "LIVE_interaction.csv"
+                key = "LIVE_interaction"
+            elif "_viewer.zip" in filename:
+                csv_filename = "LIVE_viewer.csv"
+                key = "LIVE_viewer"
 
-    # Get user input for columns and sorting direction
-    columns_to_sort = input("Enter column(s) to sort (comma-separated): ").split(',')
-    ascending_order = input("Sort in ascending order (y/n): ").strip().lower() == 'y'
+            data = process_csv(zip_file_path, csv_filename)
 
-    # Remove leading/trailing whitespace from column names
-    columns_to_sort = [col.strip() for col in columns_to_sort]
+            # Add the data array to the dictionary
+            data_dict[key] = data
 
-    # Sort the DataFrame based on user input
-    sorted_df = sort_dataframe(df, columns_to_sort, ascending_order)
+        except Exception as e:
+            print(f"Error processing {csv_filename}: {e}")
 
-    # Display the sorted DataFrame
-    print(sorted_df)
+# Save the data dictionary as a JSON file
+output_json_file = "extracted_data.json"
+with open(output_json_file, 'w') as json_file:
+    json.dump(data_dict, json_file, indent=4)
 
-except FileNotFoundError:
-    print(f"The file '{file_path}' was not found. Please check the file path.")
-except ValueError as e:
-    print(str(e))
-except Exception as e:
-    print(f"An error occurred: {str(e)}")
+print(f"Data saved to {output_json_file}")
