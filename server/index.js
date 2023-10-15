@@ -7,9 +7,7 @@ const multer = require('multer');
 const { spawn } = require('child_process');
 const { Client } = require("pg");
 const unzipper = require('unzipper');
-const pandas = require('pandas-js');
-const jsonfile = require('jsonfile');
-
+const { parse } = require('csv-parse');
 
 // Set the port for the server. Use the environment variable or a default value
 const PORT = process.env.PORT || 3005;
@@ -174,150 +172,121 @@ app.post('/upload', upload.array('files'), (req, res) => {
   });
 
   console.log(`Recieved File`);
-
-  // Call the function to insert the data
-  insertData();
+  extractFiles();
 });
 
 
+const directoryPath = 'server\\public\\files';  // Adjust the path accordingly
 
-
-
-// Load the data from the JSON file
-const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'extracted_data.json'), 'utf8'));
-
-// Define the client ID or name
-const clientID = 1; // assuming client ID is 1
-
-// Define the queries
-const insertCreationQuery = `
-  INSERT INTO live_creation (client_id, date, live_duration, live_videos)
-  VALUES ($1, $2, $3, $4)
-`;
-
-const insertEarningQuery = `
-  INSERT INTO live_earning (client_id, date, diamonds, gifters)
-  VALUES ($1, $2, $3, $4)
-`;
-
-const insertInteractionQuery = `
-  INSERT INTO live_interaction (client_id, date, new_followers, viewers_who_commented, likes, shares)
-  VALUES ($1, $2, $3, $4, $5, $6)
-`;
-
-const insertViewerQuery = `
-  INSERT INTO live_viewer (client_id, date, total_views, unique_viewers, average_watch_time, top_viewer_count)
-  VALUES ($1, $2, $3, $4, $5, $6)
-`;
-
-// Define a function to insert the data
-async function insertData() {
-  try {
-    // Start a transaction
-    await client.query('BEGIN');
-
-    // Insert the data
-    for (const item of data.LIVE_creation) {
-      const date = new Date(item.Date).toISOString().split('T')[0];  // Format the date
-      await client.query(
-        
-        `
-          INSERT INTO 
-          live_creation (client_id, date, live_duration, live_videos)
-          VALUES ($1, $2, $3, $4)
-        `
-
-
-        , [clientID, date, item.LIVE_duration, item.LIVE_videos]);
+// Function to unzip files
+async function unzipFile(filePath, extractPath) {
+  return new Promise((resolve, reject) => {
+    fs.createReadStream(filePath)
+      .pipe(unzipper.Extract({ path: extractPath }))
+      .on('close', resolve)
+      .on('error', reject);
+  });
+}
+// Function to delete files
+function deleteFile(filePath) {
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      console.error(`Failed to delete ${filePath}: ${err.message}`);
+    } else {
+      console.log(`Successfully deleted ${filePath}`);
     }
-
-    for (const item of data.LIVE_earning) {
-      const date = new Date(item.Date).toISOString().split('T')[0];  // Format the date
-      await client.query(insertEarningQuery, [clientID, date, item.Diamonds, item.Gifters]);
-    }
-
-    for (const item of data.LIVE_interaction) {
-      const date = new Date(item.Date).toISOString().split('T')[0];  // Format the date
-      await client.query(insertInteractionQuery, [clientID, date, item[' New followers'], item['Viewers who commented'], item.Likes, item.Shares]);
-    }
-
-    for (const item of data.LIVE_viewer) {
-      const date = new Date(item.Date).toISOString().split('T')[0];  // Format the date
-      await client.query(insertViewerQuery, [clientID, date, item['Total views'], item['Unique viewers'], item['Average watch time'], item['Top viewer count']]);
-    }
-
-    // Commit the transaction
-    await client.query('COMMIT');
-  } catch (error) {
-    // If an error occurs, rollback the transaction
-    await client.query('ROLLBACK');
-    console.error('Database insertion failed:', error);
-  } finally {
-    // End the client connection
-    await client.end();
-  }
+  });
 }
 
-// Define the folder where the zip files are located
-const folderPath = 'server\\public\\files';
+// Read the directory
+function extractFiles() {
+  fs.readdir(directoryPath, async (err, files) => {
+    if (err) {
+      console.error('Could not list the directory.', err);
+      process.exit(1);
+    }
 
-// Define a function to process a CSV file and add rows with non-zero values in the 2nd and 3rd columns to an array
-async function processCsv(zipFilePath, csvFilename) {
-  const dataArray = [];
+    // Filter files based on specified criteria
+    const zipFiles = files.filter(file =>
+      file.endsWith('_creation.zip') ||
+      file.endsWith('_earning.zip') ||
+      file.endsWith('_interaction.zip') ||
+      file.endsWith('_viewer.zip')
+    );
 
-  await fs.createReadStream(zipFilePath)
-    .pipe(unzipper.Parse())
-    .on('entry', (entry) => {
-      if (entry.path === csvFilename) {
-        entry.pipe(pandas.CsvReader({ skipEmptyLines: true }))
-          .on('data', (row) => {
-            if (row[1] !== 0 || row[2] !== 0) {
-              dataArray.push({ column1: row[0], column2: row[1], column3: row[2] });
-            }
-          })
-          .on('end', () => entry.autodrain());
-      } else {
-        entry.autodrain();
+    // Unzip each file
+    for (const zipFile of zipFiles) {
+      const filePath = `${directoryPath}\\${zipFile}`;
+      const extractPath = `${directoryPath}`;  // Adjust the extraction path accordingly
+
+      try {
+        await unzipFile(filePath, extractPath);
+        console.log(`Successfully unzipped ${zipFile}`);
+        deleteFile(filePath);
+      } catch (error) {
+        console.error(`Failed to unzip ${zipFile}: ${error.message}`);
       }
+    }
+  });
+}
+
+readCSV('server\\public\\files\\LIVE_creation.csv')
+
+function readCSV(csvFilePath) {
+  const csvData = [];
+  fs.createReadStream(csvFilePath)
+    .pipe(
+      parse({
+        quote: '"',
+        ltrim: true,
+        rtrim: true,
+        delimiter: ',',
+        bom: true,
+      }))
+    .on('data', (row) => {
+      const rowValues = Object.values(row);
+      // Check the values of the second and third columns by index
+      if (rowValues[1] !== '0' || rowValues[2] !== '0') {
+        csvData.push(row);
+      }
+      console.log(csvData);
+
+      const jsonDataArray = convertArrayToJson(csvData);
+      console.log(jsonDataArray);
+    })
+    .on('end', () => {
+      // Log the parsed data to the console
+      //console.log(csvData);
     });
-
-  return dataArray;
 }
 
-// Look for all files in the folder
-fs.readdirSync(folderPath).forEach(async (filename) => {
-  if (filename.endsWith('_creation.zip') || filename.endsWith('_earning.zip') || filename.endsWith('_interaction.zip') || filename.endsWith('_viewer.zip')) {
-    // Construct the full path to the zip file
-    const zipFilePath = `${folderPath}/${filename}`;
+function convertArrayToJson(inputArray) {
+  // Initialize an empty array to store the JSON objects
+  const jsonDataArray = [];
 
-    try {
-      let csvFilename;
-      let key;
+  // Extract the headers (first row) from the input array
+  const headers = inputArray[0];
 
-      if (filename.includes('_creation.zip')) {
-        csvFilename = 'LIVE_creation.csv';
-        key = 'LIVE_creation';
-      } else if (filename.includes('_earning.zip')) {
-        csvFilename = 'LIVE_earning.csv';
-        key = 'LIVE_earning';
-      } else if (filename.includes('_interaction.zip')) {
-        csvFilename = 'LIVE_interaction.csv';
-        key = 'LIVE_interaction';
-      } else if (filename.includes('_viewer.zip')) {
-        csvFilename = 'LIVE_viewer.csv';
-        key = 'LIVE_viewer';
-      }
+  // Iterate through the input array starting from the second row (index 1)
+  for (let i = 1; i < inputArray.length; i++) {
+    const dataRow = inputArray[i];
+    const jsonDataObject = {};
 
-      const data = await processCsv(zipFilePath, csvFilename);
+    // Iterate through each column in the current row
+    for (let j = 0; j < dataRow.length; j++) {
+      const header = headers[j].replace(/ /g, ''); // Remove spaces from the header
+      const value = dataRow[j];
 
-      // Add the data array to the object
-      dataObj[key] = data;
-    } catch (e) {
-      console.error(`Error processing ${csvFilename}: ${e}`);
+      // Use the modified header as the key and the corresponding value from the row
+      jsonDataObject[header] = value;
     }
-  }
-});
 
+    // Add the JSON object to the jsonDataArray
+    jsonDataArray.push(jsonDataObject);
+  }
+
+  return jsonDataArray;
+}
 
 
 
