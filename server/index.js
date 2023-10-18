@@ -66,8 +66,6 @@ app.post('/addclient', async (req, res) => {
     VALUES ('${name}');
   
   `);
-  // res.send(rows);
-  console.log(`${rows}`)
   // res.send(`You sent the query parameter id with the value: ${databaseName}`);
 
 });
@@ -87,21 +85,22 @@ app.get('/getclients', async (req, res) => {
       JOIN
         tikTokRawData trd ON tm.date = trd.date
       GROUP BY
-        cm.clientID
+        cm.clientID, cm.clientName
     )
     SELECT
-      cv.clientID,  -- Include clientID here
-      cv.clientName,
-      cv.totalViews,
-      MIN(tm.date) AS earliestDate
+      cm.clientID,
+      cm.clientName,
+      COALESCE(cv.totalViews, 0) AS totalViews,
+      COALESCE(MIN(tm.date), '1999-01-01'::date) AS earliestDate  
     FROM
-      ClientViews cv
-    JOIN
-      tikTokMaster tm ON cv.clientID = tm.clientID
+      clientMaster cm
+    LEFT JOIN
+      ClientViews cv ON cm.clientID = cv.clientID
+    LEFT JOIN
+      tikTokMaster tm ON cm.clientID = tm.clientID
     GROUP BY
-      cv.clientID,  -- Include clientID here
-      cv.clientName,
-      cv.totalViews;
+      cm.clientID, cm.clientName, cv.totalViews;
+    
   `;
     const { rows } = await client.query(queryText);
     console.log(rows)
@@ -230,7 +229,7 @@ function extractFiles() {
   });
 }
 
-readCSV('server\\public\\files\\LIVE_creation.csv')
+// readCSV('server\\public\\files\\LIVE_creation.csv')
 
 function readCSV(csvFilePath) {
   const csvData = [];
