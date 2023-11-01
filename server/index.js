@@ -110,7 +110,7 @@ app.get('/totalviewdate', async (req, res) => {
  * To add a new client with the name 'John Doe', send a POST request to:
  * /addclient?name=John%20Doe
  */
-app.post('/addclient', async (req, res) => {
+app.get('/addclient', async (req, res) => {
   // Extract the client's name from the query parameters.
   const name = req.query.name;
 
@@ -190,7 +190,7 @@ app.get('/getclients', async (req, res) => {
     const { rows } = await client.query(queryText);
 
     // Log the result for debugging purposes.
-    console.log(rows);
+    // console.log(rows);
 
     // Send the result as a JSON response.
     res.json(rows);
@@ -290,7 +290,7 @@ const upload = multer({ storage });
  * @error
  * If no files are uploaded, a 400 status code with an error message is returned.
  */
-app.post('/upload', upload.array('files'), (req, res) => {
+app.post('/upload', upload.array('files'), async (req, res) => {
   // Check if files were provided in the request.
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: 'No files uploaded' });
@@ -308,7 +308,15 @@ app.post('/upload', upload.array('files'), (req, res) => {
   console.log(`Received File`);
 
   // Execute the 'extractFiles' function, which presumably handles further processing of the files.
-  extractFiles();
+  try {
+    await extractFiles();
+    updateAllData();
+    
+  } catch (error) {
+    console.error("Error in processing files:", error);
+    // Handle error as needed, maybe send a response or log it.
+  }
+  
 });
 
 
@@ -384,35 +392,39 @@ function deleteFile(filePath) {
  * 
  */
 function extractFiles() {
-  fs.readdir(directoryPath, async (err, files) => {
-    if (err) {
-      console.error('Could not list the directory.', err);
-      process.exit(1);
-    }
+  return new Promise((resolve, reject) => {
+    fs.readdir(directoryPath, async (err, files) => {
+      if (err) {
+        console.error('Could not list the directory.', err);
+        reject(err);  // Reject the Promise if there's an error reading the directory.
+        return;
+      }
 
-    // Filter files in the directory based on the specific naming patterns.
-    const zipFiles = files.filter(file =>
-      file.endsWith('_creation.zip') ||
-      file.endsWith('_earning.zip') ||
-      file.endsWith('_interaction.zip') ||
-      file.endsWith('_viewer.zip')
-    );
-
-    // Unzip each filtered file.
-    for (const zipFile of zipFiles) {
-      const filePath = `${directoryPath}\\${zipFile}`;
-      const extractPath = `${directoryPath}`;  // Set the extraction path to the same directory.
+      const zipFiles = files.filter(file =>
+        file.endsWith('_creation.zip') ||
+        file.endsWith('_earning.zip') ||
+        file.endsWith('_interaction.zip') ||
+        file.endsWith('_viewer.zip')
+      );
 
       try {
-        await unzipFile(filePath, extractPath); // Extract the zip file's contents.
-        console.log(`Successfully unzipped ${zipFile}`);
-        deleteFile(filePath);  // Delete the original zip file after extraction.
+        for (const zipFile of zipFiles) {
+          const filePath = `${directoryPath}\\${zipFile}`;
+          const extractPath = `${directoryPath}`;
+
+          await unzipFile(filePath, extractPath);
+          console.log(`Successfully unzipped ${zipFile}`);
+          deleteFile(filePath);
+        }
+        resolve();  // Resolve the Promise when all zip files are processed.
       } catch (error) {
-        console.error(`Failed to unzip ${zipFile}: ${error.message}`);
+        console.error(`Failed to unzip a file: ${error.message}`);
+        reject(error);  // Reject the Promise if there's an error unzipping.
       }
-    }
+    });
   });
 }
+
 
 
 // readCSV('server\\public\\files\\LIVE_creation.csv')
@@ -548,6 +560,7 @@ async function insertStreamMaster(jsonDataObject, clientId) {
       const queryText = `
         INSERT INTO tikTokMaster (clientid, date)
         VALUES ($1, $2)
+        ON CONFLICT (date) DO NOTHING;
       `;
       const values = [clientId, dateInDBFormat];
       const { rows } = await client.query(queryText, values);
@@ -571,63 +584,49 @@ function convertDate(dateString) {
   return dateObj.toISOString().split('T')[0];
 }
 
-
-function runTest() {
-  // var dataVals = [];
-  readCSV('server//public//files//LIVE_creation.csv')
-    .then(data => {
-      //console.log('Processed Data:', data);
-      insertStreamMaster(data, '1');
-    })
-    .catch(err => {
-      //console.error('Error processing CSV:', err);
-    });
+async function updateAllData() {
+  await updateMasterCreationData(1);
+   updateEarningData();
+   updateInteractionData();
+   updateViewerData();
 }
 
-//runTest();
-
-
-function runTest2() {
-  // var dataVals = [];
-  readCSV('server//public//files//LIVE_creation.csv')
-    .then(data => {
-      // console.log('Processed Data:', data);
-      insertCreation(data);
-    })
-    .catch(err => {
-      //console.error('Error processing CSV:', err);
-    });
-
-  readCSV('server//public//files//LIVE_earning.csv')
-    .then(data => {
-      //console.log('Processed Data:', data);
-      insertEarning(data);
-    })
-    .catch(err => {
-      //console.error('Error processing CSV:', err);
-    });
-
-  readCSV('server//public//files//LIVE_interaction.csv')
-    .then(data => {
-      //console.log('Processed Data:', data);
-      insertInteractions(data);
-    })
-    .catch(err => {
-      //console.error('Error processing CSV:', err);
-    });
-
-  readCSV('server//public//files//LIVE_viewer.csv')
-    .then(data => {
-      //console.log('Processed Data:', data);
-      insertViewer(data);
-    })
-    .catch(err => {
-      //console.error('Error processing CSV:', err);
-    });
+async function updateMasterCreationData(clientId) {
+  try {
+    const data = await readCSV('server//public//files//LIVE_creation.csv');
+    await insertStreamMaster(data, clientId);
+    await insertCreation(data);
+  } catch (err) {
+    console.error('Error processing CSV:', err);
+  }
 }
 
-runTest2();
+async function updateEarningData() {
+  try {
+    const data = await readCSV('server//public//files//LIVE_earning.csv');
+    await insertEarning(data);
+  } catch (err) {
+    console.error('Error processing CSV:', err);
+  }
+}
 
+async function updateInteractionData() {
+  try {
+    const data = await readCSV('server//public//files//LIVE_interaction.csv');
+    await insertInteractions(data);
+  } catch (err) {
+    console.error('Error processing CSV:', err);
+  }
+}
+
+async function updateViewerData() {
+  try {
+    const data = await readCSV('server//public//files//LIVE_viewer.csv');
+    await insertViewer(data);
+  } catch (err) {
+    console.error('Error processing CSV:', err);
+  }
+}
 
 /* 
 Creation
@@ -648,15 +647,13 @@ async function insertCreation(jsonDataObject) {
 
 
       const values = [dateInDBFormat, item.LIVEduration];
+      
+
       const { rows } = await client.query(queryText, values);
-      //console.log(rows);
+      // console.log("creation indet:", rows );
+      // //console.log(rows);
     }
 
-    // Log the result for debugging purposes.
-    // console.log(rows);
-
-    // Send the result as a JSON response.
-    // res.json(rows);
 
   } catch (error) {
     // Log the error and send a generic internal server error response.
@@ -685,7 +682,6 @@ async function insertEarning(jsonDataObject) {
 
       const values = [item.Diamonds, item.Gifters, dateInDBFormat];
       const { rows } = await client.query(queryText, values);
-      //console.log(rows);
     }
 
     // Log the result for debugging purposes.
