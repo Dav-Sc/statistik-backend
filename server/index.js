@@ -269,6 +269,66 @@ app.get('/streams', async (req, res) => {
 });
 
 
+
+app.get('/delclient', async (req, res) => {
+  // Extract the client ID from the query parameters.
+  const clientid = req.query.id;
+
+  // Log the received parameters for debugging purposes.
+  console.log('clientid:', clientid);
+
+  try {
+    // Execute each DELETE statement separately.
+    await client.query('DELETE FROM tikTokCalculatedMetrics WHERE date IN (SELECT date FROM tikTokMaster WHERE clientID = $1);', [clientid]);
+    await client.query('DELETE FROM tikTokManualEntry WHERE date IN (SELECT date FROM tikTokMaster WHERE clientID = $1);', [clientid]);
+    await client.query('DELETE FROM tikTokRawData WHERE date IN (SELECT date FROM tikTokMaster WHERE clientID = $1);', [clientid]);
+    await client.query('DELETE FROM tikTokMaster WHERE clientID = $1;', [clientid]);
+    await client.query('DELETE FROM clientMaster WHERE clientID = $1;', [clientid]);
+
+    // Send a success response.
+    res.send({ message: 'Client data deleted successfully' });
+  } catch (error) {
+    // Handle the error and send a response.
+    console.error('Database query failed:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
+
+
+
+app.get('/renameclient', async (req, res) => {
+  const clientid = req.query.id;
+  const clientname = req.query.name;
+
+  // Log the received parameters for debugging purposes.
+  console.log('clientid:', clientid);
+  console.log('clientname:', clientname);
+
+  try {
+    // Fetch totalViews divided by (liveDuration/60) for the specified client ID.
+    const queryText = `
+      UPDATE clientMaster
+      SET clientName = $2
+      WHERE clientID = $1;
+    `;
+    const values = [clientid, clientname];
+
+    const { rows } = await client.query(queryText, values);
+
+    // Send the fetched data as the response.
+    res.send(rows);
+    // console.log(rows);
+  } catch (error) {
+    // Handle the error and send a response.
+    console.error('Database query failed:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
+
 /**
  * POST Endpoint to add a new client to the clientMaster table.
  * 
@@ -374,7 +434,6 @@ app.get('/getclients', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
-
 
 /**
  * File Upload Handling Module
