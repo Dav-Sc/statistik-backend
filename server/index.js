@@ -103,7 +103,7 @@ app.get('/views', async (req, res) => {
   const clientid = req.query.id;
 
   // Log the received parameters for debugging purposes.
-  console.log('clientid:', clientid);
+  //console.log('clientid:', clientid);
 
   try {
     // Fetch totalViews divided by (liveDuration/60) for the specified client ID.
@@ -135,7 +135,6 @@ app.get('/rewards', async (req, res) => {
   // Extract the client ID from the query parameters.
   const clientid = req.query.id;
 
-  // Log the received parameters for debugging purposes.
   console.log('clientid:', clientid);
 
   try {
