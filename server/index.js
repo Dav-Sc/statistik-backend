@@ -74,7 +74,7 @@ app.get('/totalviewdate', async (req, res) => {
   // Extract the client ID and date from the query parameters.
   const clientid = req.query.id;
   const date = req.query.date;
-  
+
   // Log the received parameters for debugging purposes.
   console.log('clientid:', clientid);
   console.log('date:', date);
@@ -89,7 +89,7 @@ app.get('/totalviewdate', async (req, res) => {
       AND tm.date = '${date}';
   
   `);
-  
+
   // Send the fetched data as the response.
   res.send(rows);
   console.log(`${rows}`);
@@ -113,7 +113,7 @@ app.get('/totalviewdate', async (req, res) => {
 app.post('/addclient', async (req, res) => {
   // Extract the client's name from the query parameters.
   const name = req.query.name;
-  
+
   // Log the received name for debugging purposes.
   console.log('name:', name);
 
@@ -210,7 +210,7 @@ app.get('/getclients', async (req, res) => {
 app.get("/graph", (req, res) => {
   // Define the path to the JSON file.
   const filePath = path.join(__dirname, "./clienta/graph.json");
-  
+
   // Read the specified JSON file and return its content.
   fs.readFile(filePath, "utf8", (err, data) => {
     if (err) {
@@ -257,7 +257,7 @@ const storage = multer.diskStorage({
     // Files will be saved in the 'public/files' directory.
     cb(null, path.join(__dirname, 'public', 'files'));
   },
-  
+
   // Define the naming strategy for uploaded files.
   filename: (req, file, cb) => {
     // Files will be saved with their original names.
@@ -439,37 +439,35 @@ function extractFiles() {
  *  is defined below
  */
 function readCSV(csvFilePath) {
-  const csvData = [];  // To store filtered rows from the CSV file.
+  return new Promise((resolve, reject) => {
+    const csvData = [];
 
-  fs.createReadStream(csvFilePath)
-    .pipe(
-      parse({
-        quote: '"',          // Character surrounding a field in the CSV.
-        ltrim: true,         // Trim spaces from the left of a field.
-        rtrim: true,         // Trim spaces from the right of a field.
-        delimiter: ',',      // Field separator in the CSV.
-        bom: true,           // Interpret and remove a byte order mark (BOM) from the beginning of the file.
-      }))
-    .on('data', (row) => {
-      const rowValues = Object.values(row);
-
-      // Filter rows based on values in the second and third columns.
-      if (rowValues[1] !== '0' || rowValues[2] !== '0') {
-        csvData.push(row);
-      }
-
-      console.log(csvData);
-
-      // Convert the filtered rows to JSON format and log the result.
-      const jsonDataArray = convertArrayToJson(csvData);
-      console.log(jsonDataArray);
-    })
-    .on('end', () => {
-      // Actions to take after the CSV file has been fully processed.
-      // Currently, this just logs the processed data, but this action is commented out.
-      //console.log(csvData);
-    });
+    fs.createReadStream(csvFilePath)
+      .pipe(
+        parse({
+          quote: '"',
+          ltrim: true,
+          rtrim: true,
+          delimiter: ',',
+          bom: true,
+        })
+      )
+      .on('data', (row) => {
+        const rowValues = Object.values(row);
+        if (rowValues[1] !== '0' || rowValues[2] !== '0') {
+          csvData.push(row);
+        }
+      })
+      .on('end', () => {
+        const jsonDataArray = convertArrayToJson(csvData);
+        resolve(jsonDataArray);
+      })
+      .on('error', (err) => {
+        reject(err);
+      });
+  });
 }
+
 
 
 /**
@@ -529,9 +527,263 @@ function convertArrayToJson(inputArray) {
     jsonDataArray.push(jsonDataObject);
   }
 
+
   return jsonDataArray;
 }
 
+
+
+
+/*
+tikTokMaster
+create streamid
+assign it in clientid
+assign a date
+*/
+async function insertStreamMaster(jsonDataObject, clientId) {
+  try {
+    for (const item of jsonDataObject) {
+      const dateInDBFormat = convertDate(item.Date);
+
+      const queryText = `
+        INSERT INTO tikTokMaster (clientid, date)
+        VALUES ($1, $2)
+      `;
+      const values = [clientId, dateInDBFormat];
+      const { rows } = await client.query(queryText, values);
+      //console.log(rows);
+    }
+
+    // Send the result as a JSON response (though this will send multiple responses, one per item).
+    // This is just for illustration. In practice, you might want to send a single response once all insertions are complete.
+    //res.json({ status: "All data inserted successfully!" });
+
+  } catch (error) {
+    console.error('Database query failed:', error);
+    //res.status(500).send('Internal Server Error');
+  }
+}
+
+// Convert the date from 'MMM DD, YYYY' format to 'YYYY-MM-DD'
+function convertDate(dateString) {
+  const dateObj = new Date(dateString);
+  //console.log(dateObj.toISOString().split('T')[0]);
+  return dateObj.toISOString().split('T')[0];
+}
+
+
+function runTest() {
+  // var dataVals = [];
+  readCSV('server//public//files//LIVE_creation.csv')
+    .then(data => {
+      //console.log('Processed Data:', data);
+      insertStreamMaster(data, '1');
+    })
+    .catch(err => {
+      //console.error('Error processing CSV:', err);
+    });
+}
+
+//runTest();
+
+
+function runTest2() {
+  // var dataVals = [];
+  readCSV('server//public//files//LIVE_creation.csv')
+    .then(data => {
+      // console.log('Processed Data:', data);
+      insertCreation(data);
+    })
+    .catch(err => {
+      //console.error('Error processing CSV:', err);
+    });
+
+  readCSV('server//public//files//LIVE_earning.csv')
+    .then(data => {
+      //console.log('Processed Data:', data);
+      insertEarning(data);
+    })
+    .catch(err => {
+      //console.error('Error processing CSV:', err);
+    });
+
+  readCSV('server//public//files//LIVE_interaction.csv')
+    .then(data => {
+      //console.log('Processed Data:', data);
+      insertInteractions(data);
+    })
+    .catch(err => {
+      //console.error('Error processing CSV:', err);
+    });
+
+  readCSV('server//public//files//LIVE_viewer.csv')
+    .then(data => {
+      //console.log('Processed Data:', data);
+      insertViewer(data);
+    })
+    .catch(err => {
+      //console.error('Error processing CSV:', err);
+    });
+}
+
+runTest2();
+
+
+/* 
+Creation
+  -> TikTokRawData
+      \__ date, liveDuration
+*/
+async function insertCreation(jsonDataObject) {
+  try {
+    for (const item of jsonDataObject) {
+
+      const dateInDBFormat = convertDate(item.Date);
+
+      const queryText = `
+        INSERT INTO tikTokRawData (date, liveduration)
+        VALUES ($1, $2)
+        ON CONFLICT (date) DO NOTHING;
+      `;
+
+
+      const values = [dateInDBFormat, item.LIVEduration];
+      const { rows } = await client.query(queryText, values);
+      //console.log(rows);
+    }
+
+    // Log the result for debugging purposes.
+    // console.log(rows);
+
+    // Send the result as a JSON response.
+    // res.json(rows);
+
+  } catch (error) {
+    // Log the error and send a generic internal server error response.
+    console.error('Database query failed:', error);
+    // res.status(500).send('Internal Server Error');
+  }
+
+}
+
+/*
+Earning
+  -> TikTokRawData
+      \__ date, diamonds, gifters
+*/
+async function insertEarning(jsonDataObject) {
+  try {
+    for (const item of jsonDataObject) {
+
+      const dateInDBFormat = convertDate(item.Date);
+
+      const queryText = `
+        UPDATE tikTokRawData
+        SET diamonds = $1, gifters = $2
+        WHERE date = $3;      
+      `;
+
+      const values = [item.Diamonds, item.Gifters, dateInDBFormat];
+      const { rows } = await client.query(queryText, values);
+      //console.log(rows);
+    }
+
+    // Log the result for debugging purposes.
+    // console.log(rows);
+
+    // Send the result as a JSON response.
+    // res.json(rows);
+
+  } catch (error) {
+    // Log the error and send a generic internal server error response.
+    console.error('Database query failed:', error);
+    // res.status(500).send('Internal Server Error');
+  }
+
+}
+
+/*
+Interactions
+  -> TikTokRawData
+      \__ date, newFollowers, viewersWhoCommented, likes, shares
+*/
+
+async function insertInteractions(jsonDataObject) {
+  try {
+    for (const item of jsonDataObject) {
+
+      const dateInDBFormat = convertDate(item.Date);
+
+      const queryText = `
+        UPDATE tikTokRawData
+        SET newfollowers = $1, viewerswhocommented = $2, likes = $3, shares = $4
+        WHERE date = $5;      
+      `;
+
+      const values = [item.Newfollowers, item.Viewerswhocommented, item.Likes, item.Shares, dateInDBFormat];
+      const { rows } = await client.query(queryText, values);
+      //console.log(rows);
+    }
+
+    // Log the result for debugging purposes.
+    // console.log(rows);
+
+    // Send the result as a JSON response.
+    // res.json(rows);
+
+  } catch (error) {
+    // Log the error and send a generic internal server error response.
+    console.error('Database query failed:', error);
+    // res.status(500).send('Internal Server Error');
+  }
+
+}
+
+/*
+Viewer
+  -> TikTokRawData
+      \__ date, totalViews, uniqueViewers, avgWatchTime, topViewerCount
+*/
+async function insertViewer(jsonDataObject) {
+  try {
+    for (const item of jsonDataObject) {
+
+      const dateInDBFormat = convertDate(item.Date);
+
+      const queryText = `
+        UPDATE tikTokRawData
+        SET totalviews = $1, uniqueviewers = $2, avgwatchtime = $3, topviewercount = $4
+        WHERE date = $5;      
+      `;
+
+      const values = [item.Totalviews, item.Uniqueviewers, item.Averagewatchtime, item.Topviewercount, dateInDBFormat];
+      const { rows } = await client.query(queryText, values);
+      //console.log(rows);
+    }
+
+    // Log the result for debugging purposes.
+    // console.log(rows);
+
+    // Send the result as a JSON response.
+    // res.json(rows);
+
+  } catch (error) {
+    // Log the error and send a generic internal server error response.
+    console.error('Database query failed:', error);
+    // res.status(500).send('Internal Server Error');
+  }
+
+}
+
+
+
+
+// function myFunc() {
+//   myFunc = function () { }; // kill it as soon as it was called
+//   console.log('Output: ', readCSV('server//public//files//LIVE_viewer.csv'));
+// };
+
+// myFunc();
 
 
 // Start the server and listen on the specified port
