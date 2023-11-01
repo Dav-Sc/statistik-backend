@@ -96,6 +96,148 @@ app.get('/totalviewdate', async (req, res) => {
 });
 
 
+
+
+app.get('/views', async (req, res) => {
+  // Extract the client ID from the query parameters.
+  const clientid = req.query.id;
+
+  // Log the received parameters for debugging purposes.
+  console.log('clientid:', clientid);
+
+  try {
+    // Fetch totalViews divided by (liveDuration/60) for the specified client ID.
+    const queryText = `
+    SELECT 
+      trd.date,
+      ROUND(trd.totalViews / (CASE WHEN trd.liveDuration = 0 THEN 1 ELSE trd.liveDuration END / 60.0), 2) AS viewsPerMinute,
+      ROUND(trd.uniqueViewers / (CASE WHEN trd.liveDuration = 0 THEN 1 ELSE trd.liveDuration END / 60.0), 2) AS uniqueViewersPerMinute
+    FROM tikTokRawData trd
+    INNER JOIN tikTokMaster tm ON trd.date = tm.date
+    WHERE tm.clientID = $1
+    ORDER BY trd.date;
+    `;
+    const values = [clientid];
+
+    const { rows } = await client.query(queryText, values);
+
+    // Send the fetched data as the response.
+    res.send(rows);
+    // console.log(rows);
+  } catch (error) {
+    // Handle the error and send a response.
+    console.error('Database query failed:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.get('/rewards', async (req, res) => {
+  // Extract the client ID from the query parameters.
+  const clientid = req.query.id;
+
+  // Log the received parameters for debugging purposes.
+  console.log('clientid:', clientid);
+
+  try {
+    // Fetch totalViews divided by (liveDuration/60) for the specified client ID.
+    const queryText = `
+    SELECT 
+      trd.date,
+      ROUND(trd.diamonds / (CASE WHEN trd.liveDuration = 0 THEN 1 ELSE trd.liveDuration END / 60.0), 2) AS diamondspermin,
+      ROUND(trd.gifters / (CASE WHEN trd.liveDuration = 0 THEN 1 ELSE trd.liveDuration END / 60.0), 2) AS gifterspermin,
+      ROUND(trd.diamonds / gifters, 2) AS diamondspergifters
+    FROM tikTokRawData trd
+    INNER JOIN tikTokMaster tm ON trd.date = tm.date
+    WHERE tm.clientID = $1
+    ORDER BY trd.date;
+    `;
+    const values = [clientid];
+
+    const { rows } = await client.query(queryText, values);
+
+    // Send the fetched data as the response.
+    res.send(rows);
+    // console.log(rows);
+  } catch (error) {
+    // Handle the error and send a response.
+    console.error('Database query failed:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
+app.get('/engagement', async (req, res) => {
+  // Extract the client ID from the query parameters.
+  const clientid = req.query.id;
+
+  // Log the received parameters for debugging purposes.
+  console.log('clientid:', clientid);
+
+  try {
+    // Fetch totalViews divided by (liveDuration/60) for the specified client ID.
+    const queryText = `
+    SELECT 
+        trd.date,
+        ROUND(trd.newFollowers / (CASE WHEN trd.liveDuration = 0 THEN 1 ELSE trd.liveDuration END / 60.0), 2) AS newFollowersPerMinute,
+        ROUND(trd.likes / (CASE WHEN trd.liveDuration = 0 THEN 1 ELSE trd.liveDuration END / 60.0), 2) AS likesPerMinute,
+        ROUND(trd.viewersWhoCommented / (CASE WHEN trd.liveDuration = 0 THEN 1 ELSE trd.liveDuration END / 60.0), 2) AS viewersWhoCommentedPerMinute,
+        ROUND(trd.shares / (CASE WHEN trd.liveDuration = 0 THEN 1 ELSE trd.liveDuration END / 60.0), 2) AS sharesPerMinute
+    FROM tikTokRawData trd
+    INNER JOIN tikTokMaster tm ON trd.date = tm.date
+    WHERE tm.clientID = $1
+    ORDER BY trd.date;
+
+    `;
+    const values = [clientid];
+
+    const { rows } = await client.query(queryText, values);
+
+    // Send the fetched data as the response.
+    res.send(rows);
+    // console.log(rows);
+  } catch (error) {
+    // Handle the error and send a response.
+    console.error('Database query failed:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.get('/sponsorships', async (req, res) => {
+  // Extract the client ID from the query parameters.
+  const clientid = req.query.id;
+
+  // Log the received parameters for debugging purposes.
+  console.log('clientid:', clientid);
+
+  try {
+    // Fetch totalViews divided by (liveDuration/60) for the specified client ID.
+    const queryText = `
+    SELECT 
+        trd.date,
+        ROUND((trd.uniqueViewers * (CASE WHEN trd.liveDuration = 0 THEN 1 ELSE trd.liveDuration END / 60.0)) / 60.0, 2) AS uniqueViewersPerHour,
+        ROUND((trd.liveDuration / 60.0), 2) AS viewerHoursPerMinute
+    FROM tikTokRawData trd
+    INNER JOIN tikTokMaster tm ON trd.date = tm.date
+    WHERE tm.clientID = $1
+    ORDER BY trd.date;
+
+
+    `;
+    const values = [clientid];
+
+    const { rows } = await client.query(queryText, values);
+
+    // Send the fetched data as the response.
+    res.send(rows);
+    // console.log(rows);
+  } catch (error) {
+    // Handle the error and send a response.
+    console.error('Database query failed:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
 /**
  * POST Endpoint to add a new client to the clientMaster table.
  * 
@@ -311,12 +453,12 @@ app.post('/upload', upload.array('files'), async (req, res) => {
   try {
     await extractFiles();
     updateAllData();
-    
+
   } catch (error) {
     console.error("Error in processing files:", error);
     // Handle error as needed, maybe send a response or log it.
   }
-  
+
 });
 
 
@@ -586,9 +728,9 @@ function convertDate(dateString) {
 
 async function updateAllData() {
   await updateMasterCreationData(1);
-   updateEarningData();
-   updateInteractionData();
-   updateViewerData();
+  updateEarningData();
+  updateInteractionData();
+  updateViewerData();
 }
 
 async function updateMasterCreationData(clientId) {
@@ -647,7 +789,7 @@ async function insertCreation(jsonDataObject) {
 
 
       const values = [dateInDBFormat, item.LIVEduration];
-      
+
 
       const { rows } = await client.query(queryText, values);
       // console.log("creation indet:", rows );
