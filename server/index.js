@@ -237,6 +237,38 @@ app.get('/sponsorships', async (req, res) => {
 });
 
 
+app.get('/streams', async (req, res) => {
+  // Extract the client ID from the query parameters.
+  const clientid = req.query.id;
+
+  // Log the received parameters for debugging purposes.
+  console.log('clientid:', clientid);
+
+  try {
+    // Fetch totalViews divided by (liveDuration/60) for the specified client ID.
+    const queryText = `
+    SELECT 
+	    trd.*
+    FROM tikTokRawData trd
+    INNER JOIN tikTokMaster tm ON trd.date = tm.date
+    WHERE tm.clientID = $1
+    ORDER BY trd.date;
+    `;
+    const values = [clientid];
+
+    const { rows } = await client.query(queryText, values);
+
+    // Send the fetched data as the response.
+    res.send(rows);
+    // console.log(rows);
+  } catch (error) {
+    // Handle the error and send a response.
+    console.error('Database query failed:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
 /**
  * POST Endpoint to add a new client to the clientMaster table.
  * 
@@ -344,45 +376,6 @@ app.get('/getclients', async (req, res) => {
 });
 
 
-
-
-
-
-app.get("/graph", (req, res) => {
-  // Define the path to the JSON file.
-  const filePath = path.join(__dirname, "./clienta/graph.json");
-
-  // Read the specified JSON file and return its content.
-  fs.readFile(filePath, "utf8", (err, data) => {
-    if (err) {
-      // Log the error and send an internal server error response.
-      console.error("Failed to read graph.json", err);
-      res.status(500).send("Internal Server Error");
-      return;
-    }
-
-    // Set the response header to inform the client that the returned data is in JSON format.
-    res.setHeader("Content-Type", "application/json");
-    res.send(data);
-  });
-});
-
-// Endpoint to get the stream data
-app.get("/stream", (req, res) => {
-  // Read the specified JSON file and return its content
-  fs.readFile(path.join(__dirname, "./clienta/stream.json"), "utf8", (err, data) => {
-    if (err) {
-      console.error("Failed to read stream.json", err);
-      res.status(500).send("Internal Server Error");
-      return;
-    }
-    // Set the response header to send JSON data
-    res.setHeader("Content-Type", "application/json");
-    res.send(data);
-  });
-});
-
-
 /**
  * File Upload Handling Module
  * This module provides functionalities for receiving and storing uploaded files.
@@ -432,6 +425,7 @@ const upload = multer({ storage });
  * If no files are uploaded, a 400 status code with an error message is returned.
  */
 app.post('/upload', upload.array('files'), async (req, res) => {
+  const clientid = req.query.id;
   // Check if files were provided in the request.
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: 'No files uploaded' });
@@ -446,12 +440,13 @@ app.post('/upload', upload.array('files'), async (req, res) => {
   });
 
   // Log a message indicating a successful file upload.
-  console.log(`Received File`);
+  //console.log(`Received File`);
 
   // Execute the 'extractFiles' function, which presumably handles further processing of the files.
   try {
     await extractFiles();
-    updateAllData();
+    console.log(`\n\n\nReceived clientid`, toString(clientid));
+    updateAllData(clientid);
 
   } catch (error) {
     console.error("Error in processing files:", error);
@@ -725,8 +720,8 @@ function convertDate(dateString) {
   return dateObj.toISOString().split('T')[0];
 }
 
-async function updateAllData() {
-  await updateMasterCreationData(1);
+async function updateAllData(clientId) {
+  await updateMasterCreationData(clientId);
   updateEarningData();
   updateInteractionData();
   updateViewerData();
