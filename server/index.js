@@ -79,21 +79,29 @@ app.get('/totalviewdate', async (req, res) => {
   console.log('clientid:', clientid);
   console.log('date:', date);
 
-  // Fetch the total views for the specified client ID and date.
-  const { rows } = await client.query(`
+  try {
+    // Use parameterized queries to prevent SQL injection.
+    const queryText = `
+      SELECT trd.totalViews, tm.date
+      FROM tikTokRawData trd
+      INNER JOIN tikTokMaster tm ON trd.date = tm.date
+      WHERE tm.clientID = $1 AND tm.date = $2;
+    `;
 
-    SELECT trd.totalViews, tm.date
-    FROM tikTokRawData trd
-    INNER JOIN tikTokMaster tm ON trd.date = tm.date
-    WHERE tm.clientID = ${clientid}
-      AND tm.date = '${date}';
-  
-  `);
+    const values = [clientid, date];
 
-  // Send the fetched data as the response.
-  res.send(rows);
-  console.log(`${rows}`);
+    const { rows } = await client.query(queryText, values);
+
+    // Send the fetched data as the response.
+    res.send(rows);
+    console.log(rows);
+  } catch (error) {
+    // Handle the error and send a response.
+    console.error('Database query failed:', error);
+    res.status(500).send('Internal Server Error');
+  }
 });
+
 
 
 
