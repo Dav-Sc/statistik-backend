@@ -101,10 +101,218 @@ app.get('/totalviewdate', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
+//
+//const inputDate = date;
+//const dateObject = new Date(inputDate);
+//const formattedDate = dateObject.toISOString().split('T')[0];
+// 
+
+app.get('/streamspec', async (req, res) => {
+  // Extract the client ID and date from the query parameters.
+  //const clientid = req.query.id;
+  const date = req.query.date;
+
+  // Log the received parameters for debugging purposes.
+  //console.log('clientid:', clientid);
+  // console.log('date:', date);
+
+  try {
+    // Use parameterized queries to prevent SQL injection.
+    const queryText = `
+    SELECT
+        trd.totalViews,
+        trd.uniqueViewers,
+        trd.avgWatchTime,
+        trd.topViewerCount,
+        trd.newFollowers,
+        trd.viewersWhoCommented,
+        trd.likes,
+        trd.shares,
+        trd.diamonds,
+        trd.gifters,
+        trd.liveDuration,
+        tme.startTime,
+        tme.avgViewerCount,
+        tme.followersWatchedLive,
+        tme.followersSentGifts,
+        tme.followersCommented,
+        tme.followersAvgWatchTime,
+        tme.othersAvgWatchTime,
+        tme.viewsFromSuggestedLiveVideos,
+        tme.viewsFromForYouShortVideos,
+        tme.viewsFromOthers,
+        tme.viewsFromShares,
+        tme.viewsFromFollowing,
+        tcm.avgMinutesWatched,
+        tcm.totalViewsPerMin,
+        tcm.uniqueViewersPerMin,
+        tcm.diamondsPerMin,
+        tcm.giftersPerMin,
+        tcm.diamondsPerGifter,
+        tcm.viewersPerGifter,
+        tcm.newFollowersPerMin,
+        tcm.viewersWhoCommentedPerMin,
+        tcm.likesPerMin,
+        tcm.sharesPerMin,
+        tcm.viewerHours,
+        tcm.viewerHoursPerMin,
+        tcm.conversionRate,
+        tcm.followerHourPortion
+    FROM
+        tikTokMaster tm
+    JOIN
+        clientMaster cm ON tm.clientID = cm.clientID
+    LEFT JOIN
+        tikTokRawData trd ON tm.date = trd.date
+    LEFT JOIN
+        tikTokManualEntry tme ON tm.date = tme.date
+    LEFT JOIN
+        tikTokCalculatedMetrics tcm ON tm.date = tcm.date
+    WHERE
+        tm.date = $1; -- Insert the desired date
+
+    `;
+
+    const values = [date];
+
+    const { rows } = await client.query(queryText, values);
+
+    // Send the fetched data as the response.
+    res.send(rows);
+    //console.log(rows);
+  } catch (error) {
+    // Handle the error and send a response.
+    console.error('Database query failed:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+//http://localhost:3005/updatestreamvalue?date=${date}&key=${key}&value=${newValue}
+app.get('/updatestreamvalue', async (req, res) => {
+  const date = req.query.date;
+  const key = req.query.key;
+  const newValue = req.query.value;
+
+  console.log(date, key, newValue)
+
+  try {
+    // Validate that the key provided is a valid column name in your tables.
+    const validKeys = [
+      'totalviews', 'uniqueviewers', 'avgwatchtime', 'topviewercount',
+      'newfollowers', 'viewerswhocommented', 'likes', 'shares', 'diamonds',
+      'gifters', 'liveduration', 'starttime', 'avgviewercount',
+      'followerswatchedlive', 'followerssentgifts', 'followerscommented',
+      'followersavgwatchtime', 'othersavgwatchtime', 'viewsfromsuggestedlivevideos',
+      'viewsfromforyoushortvideos', 'viewsfromothers', 'viewsfromshares',
+      'viewsfromfollowing', 'avgminuteswatched', 'totalviewspermin',
+      'uniqueviewerspermin', 'diamondspermin', 'gifterspermin',
+      'diamondspergifter', 'viewerspergifter', 'newfollowerspermin',
+      'viewerswhocommentedpermin', 'likespermin', 'sharespermin',
+      'viewerhours', 'viewerhourspermin', 'conversionrate', 'followerhourportion'
+    ];
+
+    if (!validKeys.includes(key)) {
+      return res.status(400).send('Invalid key provided');
+    }
+
+    // Create an object to map the key to the corresponding table and column.
+    const tableColumnMap = {
+      totalviews: 'tikTokRawData.totalviews',
+      uniqueviewers: 'tikTokRawData.uniqueviewers',
+      avgwatchtime: 'tikTokRawData.avgWatchTime',
+      topviewercount: 'tikTokRawData.topviewercount',
+      newfollowers: 'tikTokRawData.newfollowers',
+      viewerswhocommented: 'tikTokRawData.viewerswhocommented',
+      likes: 'tikTokRawData.likes',
+      shares: 'tikTokRawData.shares',
+      diamonds: 'tikTokRawData.diamonds',
+      gifters: 'tikTokRawData.gifters',
+      liveduration: 'tikTokRawData.liveduration',
+      starttime: 'tikTokManualEntry.startTime',
+      avgviewercount: 'tikTokManualEntry.avgviewercount',
+      followerswatchedlive: 'tikTokManualEntry.followerswatchedlive',
+      followerssentgifts: 'tikTokManualEntry.followerssentgifts',
+      followerscommented: 'tikTokManualEntry.followerscommented',
+      followersavgwatchtime: 'tikTokManualEntry.followersavgwatchtime',
+      othersavgwatchtime: 'tikTokManualEntry.othersavgwatchtime',
+      viewsfromsuggestedlivevideos: 'tikTokManualEntry.viewsfromsuggestedlivevideos',
+      viewsfromforyoushortvideos: 'tikTokManualEntry.viewsfromforyoushortvideos',
+      viewsfromothers: 'tikTokManualEntry.viewsfromothers',
+      viewsfromshares: 'tikTokManualEntry.viewsfromshares',
+      viewsfromfollowing: 'tikTokManualEntry.viewsfromfollowing',
+      avgminuteswatched: 'tikTokCalculatedMetrics.avgminuteswatched',
+      totalviewspermin: 'tikTokCalculatedMetrics.totalviewspermin',
+      uniqueviewerspermin: 'tikTokCalculatedMetrics.uniqueviewerspermin',
+      diamondspermin: 'tikTokCalculatedMetrics.diamondspermin',
+      gifterspermin: 'tikTokCalculatedMetrics.gifterspermin',
+      diamondspergifter: 'tikTokCalculatedMetrics.diamondspergifter',
+      viewerspergifter: 'tikTokCalculatedMetrics.viewerspergifter',
+      newfollowerspermin: 'tikTokCalculatedMetrics.newfollowerspermin',
+      viewerswhocommentedpermin: 'tikTokCalculatedMetrics.viewerswhocommentedpermin',
+      likespermin: 'tikTokCalculatedMetrics.likespermin',
+      sharespermin: 'tikTokCalculatedMetrics.sharespermin',
+      viewerhours: 'tikTokCalculatedMetrics.viewerhours',
+      viewerhourspermin: 'tikTokCalculatedMetrics.viewerhourspermin',
+      conversionrate: 'tikTokCalculatedMetrics.conversionrate',
+      followerhourportion: 'tikTokCalculatedMetrics.followerhourportion'
+    };
 
 
+    // Use the map to determine the table and column for the provided key.
+    const tableAndColumn = tableColumnMap[key];
+
+    if (!tableAndColumn) {
+      return res.status(400).send('Key mapping not found');
+    }
+
+    console.log(tableAndColumn.split('.')[0]);
+    console.log(tableAndColumn.split('.')[1]);
+
+    // Use parameterized queries to update the specified column.
+    const queryText = `
+      UPDATE ${tableAndColumn.split('.')[0]}
+      SET ${tableAndColumn.split('.')[1]} = $1
+      WHERE date = $2
+    `;
+
+    const values = [newValue, date];
+
+    console.log(queryText, values);
+
+    await client.query(queryText, values);
 
 
+    res.status(200).send('Update successful');
+  } catch (error) {
+    console.error('Update failed:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
+app.get('/deleteStream', async (req, res) => {
+  // Extract the client ID and date from the query parameters.
+  const date = req.query.date;
+
+  // Log the received parameters for debugging purposes.
+  console.log('date:', date);
+
+  try {
+
+    await client.query('DELETE FROM tikTokCalculatedMetrics WHERE date = $1;;', [date]);
+    await client.query('DELETE FROM tikTokManualEntry WHERE date = $1;;', [date]);
+    await client.query('DELETE FROM tikTokRawData WHERE date = $1;;', [date]);
+    await client.query('DELETE FROM tikTokMaster WHERE date = $1;;', [date]);
+
+    // Send the fetched data as the response.
+    res.send(rows);
+    console.log(rows);
+  } catch (error) {
+    // Handle the error and send a response.
+    console.error('Database query failed:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
 
 app.get('/views', async (req, res) => {
   // Extract the client ID from the query parameters.
