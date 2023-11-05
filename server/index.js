@@ -347,6 +347,35 @@ app.get('/views', async (req, res) => {
   }
 });
 
+
+app.get('/createemptystream', async (req, res) => {
+  // Extract the client ID from the query parameters.
+  const clientid = req.query.id;
+  const emptyDate = req.query.name;
+ 
+  // Log the received parameters for debugging purposes.
+  //console.log('clientid:', clientid);
+
+  try {
+    // Fetch totalViews divided by (liveDuration/60) for the specified client ID.
+    const queryText = `
+      INSERT INTO tikTokMaster (clientID, date)
+      VALUES ($1, $2);
+    `;
+    const values = [clientid, date];
+
+    const { rows } = await client.query(queryText, values);
+
+    // Send the fetched data as the response.
+    res.send(rows);
+    // console.log(rows);
+  } catch (error) {
+    // Handle the error and send a response.
+    console.error('Database query failed:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 app.get('/rewards', async (req, res) => {
   // Extract the client ID from the query parameters.
   const clientid = req.query.id;
