@@ -76,8 +76,8 @@ app.get('/totalviewdate', async (req, res) => {
   const date = req.query.date;
 
   // Log the received parameters for debugging purposes.
-  console.log('clientid:', clientid);
-  console.log('date:', date);
+  // console.log('clientid:', clientid);
+  // console.log('date:', date);
 
   try {
     // Use parameterized queries to prevent SQL injection.
@@ -94,7 +94,7 @@ app.get('/totalviewdate', async (req, res) => {
 
     // Send the fetched data as the response.
     res.send(rows);
-    console.log(rows);
+    // console.log(rows);
   } catch (error) {
     // Handle the error and send a response.
     console.error('Database query failed:', error);
@@ -193,7 +193,7 @@ app.get('/updatestreamvalue', async (req, res) => {
   const key = req.query.key;
   const newValue = req.query.value;
 
-  console.log(date, key, newValue)
+  // console.log(date, key, newValue)
 
   try {
     // Validate that the key provided is a valid column name in your tables.
@@ -265,8 +265,8 @@ app.get('/updatestreamvalue', async (req, res) => {
       return res.status(400).send('Key mapping not found');
     }
 
-    console.log(tableAndColumn.split('.')[0]);
-    console.log(tableAndColumn.split('.')[1]);
+    // console.log(tableAndColumn.split('.')[0]);
+    // console.log(tableAndColumn.split('.')[1]);
 
     // Use parameterized queries to update the specified column.
     const queryText = `
@@ -277,7 +277,7 @@ app.get('/updatestreamvalue', async (req, res) => {
 
     const values = [newValue, date];
 
-    console.log(queryText, values);
+    // console.log(queryText, values);
 
     await client.query(queryText, values);
 
@@ -295,7 +295,7 @@ app.get('/deleteStream', async (req, res) => {
   const date = req.query.date;
 
   // Log the received parameters for debugging purposes.
-  console.log('date:', date);
+  // console.log('date:', date);
 
   try {
 
@@ -306,7 +306,7 @@ app.get('/deleteStream', async (req, res) => {
 
     // Send the fetched data as the response.
     res.send(rows);
-    console.log(rows);
+    // console.log(rows);
   } catch (error) {
     // Handle the error and send a response.
     console.error('Database query failed:', error);
@@ -351,20 +351,21 @@ app.get('/views', async (req, res) => {
 app.get('/createemptystream', async (req, res) => {
   // Extract the client ID from the query parameters.
   const clientid = req.query.id;
-  const emptyDate = req.query.name;
+  const emptyDate = req.query.date;
  
   // Log the received parameters for debugging purposes.
   //console.log('clientid:', clientid);
 
   try {
     // Fetch totalViews divided by (liveDuration/60) for the specified client ID.
-    const queryText = `
-      INSERT INTO tikTokMaster (clientID, date)
-      VALUES ($1, $2);
-    `;
-    const values = [clientid, date];
+    
+    
+    await client.query('INSERT INTO tikTokMaster (clientID, date) VALUES ($1, $2);', [clientid, emptyDate]);
+    await client.query('INSERT INTO tikTokRawData  (date) VALUES ($1);', [emptyDate]);
+    await client.query('INSERT INTO tikTokManualEntry  (date) VALUES ($1);', [emptyDate]);
+    await client.query('INSERT INTO v  (date) VALUES ($1);', [emptyDate]);
+    
 
-    const { rows } = await client.query(queryText, values);
 
     // Send the fetched data as the response.
     res.send(rows);
@@ -380,7 +381,7 @@ app.get('/rewards', async (req, res) => {
   // Extract the client ID from the query parameters.
   const clientid = req.query.id;
 
-  console.log('clientid:', clientid);
+  // console.log('clientid:', clientid);
 
   try {
     // Fetch totalViews divided by (liveDuration/60) for the specified client ID.
@@ -415,7 +416,7 @@ app.get('/engagement', async (req, res) => {
   const clientid = req.query.id;
 
   // Log the received parameters for debugging purposes.
-  console.log('clientid:', clientid);
+  // console.log('clientid:', clientid);
 
   try {
     // Fetch totalViews divided by (liveDuration/60) for the specified client ID.
@@ -451,7 +452,7 @@ app.get('/sponsorships', async (req, res) => {
   const clientid = req.query.id;
 
   // Log the received parameters for debugging purposes.
-  console.log('clientid:', clientid);
+  // console.log('clientid:', clientid);
 
   try {
     // Fetch totalViews divided by (liveDuration/60) for the specified client ID.
@@ -487,7 +488,7 @@ app.get('/streams', async (req, res) => {
   const clientid = req.query.id;
 
   // Log the received parameters for debugging purposes.
-  console.log('clientid:', clientid);
+  // console.log('clientid:', clientid);
 
   try {
     // Fetch totalViews divided by (liveDuration/60) for the specified client ID.
@@ -520,7 +521,7 @@ app.get('/delclient', async (req, res) => {
   const clientid = req.query.id;
 
   // Log the received parameters for debugging purposes.
-  console.log('clientid:', clientid);
+  // console.log('clientid:', clientid);
 
   try {
     // Execute each DELETE statement separately.
@@ -548,8 +549,8 @@ app.get('/renameclient', async (req, res) => {
   const clientname = req.query.name;
 
   // Log the received parameters for debugging purposes.
-  console.log('clientid:', clientid);
-  console.log('clientname:', clientname);
+  // console.log('clientid:', clientid);
+  // console.log('clientname:', clientname);
 
   try {
     // Fetch totalViews divided by (liveDuration/60) for the specified client ID.
@@ -593,7 +594,7 @@ app.get('/addclient', async (req, res) => {
   const name = req.query.name;
 
   // Log the received name for debugging purposes.
-  console.log('name:', name);
+  // console.log('name:', name);
 
   // Insert the new client's name into the clientMaster table.
   const { rows } = await client.query(`
@@ -749,7 +750,7 @@ app.post('/upload', upload.array('files'), async (req, res) => {
   // Execute the 'extractFiles' function, which presumably handles further processing of the files.
   try {
     await extractFiles();
-    console.log(`\n\n\nReceived clientid`, toString(clientid));
+    // console.log(`\n\n\nReceived clientid`, toString(clientid));
     updateAllData(clientid);
 
   } catch (error) {
