@@ -1,10 +1,3 @@
--- -- ORDER OF OPERATIONS!!!
--- 	-- Populate clientMaster (input clientName, clientID will auto generate)
--- 	-- Populate tikTokMaster (streamID auto generates, input clientID & stream date)
--- 	-- Populate tikTokRawData & tikTokManualEntry
--- 	-- Populate tikTokCalculatedMetrics
-
-
 
 CREATE TABLE IF NOT EXISTS clientMaster (
 	clientID INT GENERATED ALWAYS AS IDENTITY,
@@ -26,7 +19,7 @@ CREATE TABLE IF NOT EXISTS tikTokRawData (
 	date date UNIQUE,
 	totalViews int,
 	uniqueViewers int,
-	avgWatchTime int, -- in seconds
+	avgWatchTime int, 
 	topViewerCount int,
 	newFollowers int,
 	viewersWhoCommented int,
@@ -34,7 +27,7 @@ CREATE TABLE IF NOT EXISTS tikTokRawData (
 	shares int,
 	diamonds int,
 	gifters int,
-	liveDuration int, -- in seconds
+	liveDuration int, 
 
 	PRIMARY KEY(date),
 	CONSTRAINT fk_tikTokRawData FOREIGN KEY (date) REFERENCES tikTokMaster(date)
