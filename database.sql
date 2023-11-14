@@ -1,8 +1,8 @@
--- ORDER OF OPERATIONS!!!
-	-- Populate clientMaster (input clientName, clientID will auto generate)
-	-- Populate tikTokMaster (streamID auto generates, input clientID & stream date)
-	-- Populate tikTokRawData & tikTokManualEntry
-	-- Populate tikTokCalculatedMetrics
+-- -- ORDER OF OPERATIONS!!!
+-- 	-- Populate clientMaster (input clientName, clientID will auto generate)
+-- 	-- Populate tikTokMaster (streamID auto generates, input clientID & stream date)
+-- 	-- Populate tikTokRawData & tikTokManualEntry
+-- 	-- Populate tikTokCalculatedMetrics
 
 
 
