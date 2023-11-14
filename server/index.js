@@ -8,6 +8,10 @@ const { spawn } = require('child_process');
 const { Client } = require("pg");
 const unzipper = require('unzipper');
 const { parse } = require('csv-parse');
+const bonjour = require('bonjour')();
+
+// advertise an HTTP server on port 3000
+bonjour.publish({ name: 'Statistik Backend', type: 'http', port: 3005 });
 
 // Set the port for the server. Use the environment variable or a default value
 const PORT = process.env.PORT || 3005;
