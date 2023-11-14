@@ -1091,7 +1091,7 @@ async function insertCreation(jsonDataObject) {
       const queryText = `
         INSERT INTO tikTokRawData (date, liveduration)
         VALUES ($1, $2)
-        ON CONFLICT (date) DO NOTHING;
+        ON CONFLICT (date) DO NOTHING
       `;
 
 
@@ -1126,7 +1126,7 @@ async function insertEarning(jsonDataObject) {
       const queryText = `
         UPDATE tikTokRawData
         SET diamonds = $1, gifters = $2
-        WHERE date = $3;      
+        WHERE date = $3 
       `;
 
       const values = [item.Diamonds, item.Gifters, dateInDBFormat];
@@ -1162,7 +1162,7 @@ async function insertInteractions(jsonDataObject) {
       const queryText = `
         UPDATE tikTokRawData
         SET newfollowers = $1, viewerswhocommented = $2, likes = $3, shares = $4
-        WHERE date = $5;      
+        WHERE date = $5  
       `;
 
       const values = [item.Newfollowers, item.Viewerswhocommented, item.Likes, item.Shares, dateInDBFormat];
@@ -1198,7 +1198,7 @@ async function insertViewer(jsonDataObject) {
       const queryText = `
         UPDATE tikTokRawData
         SET totalviews = $1, uniqueviewers = $2, avgwatchtime = $3, topviewercount = $4
-        WHERE date = $5;      
+        WHERE date = $5
       `;
 
       const values = [item.Totalviews, item.Uniqueviewers, item.Averagewatchtime, item.Topviewercount, dateInDBFormat];
