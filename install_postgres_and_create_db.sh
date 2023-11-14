@@ -140,10 +140,63 @@ FROM
 
 -- TEST RETURN STATEMENTS
 
-select * from clientMaster;
-select * from tikTokMaster;
-select * from tikTokRawData;
-select * from tikTokManualEntry;
-select * from tikTokCalculatedMetrics;
+--select * from clientMaster;
+--select * from tikTokMaster;
+--select * from tikTokRawData;
+--select * from tikTokManualEntry;
+--select * from tikTokCalculatedMetrics;
 
-select * from masterView;
+--select * from masterView;
+
+--Update
+
+CREATE OR REPLACE FUNCTION calculate_tikTokMetrics()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS
+$$
+BEGIN
+	INSERT INTO tikTokCalculatedMetrics 
+		(date, avgMinutesWatched, totalViewsPerMin, uniqueViewersPerMin, diamondsPerMin, giftersPerMin, diamondsPerGifter, viewersPerGifter, newFollowersPerMin, viewersWhoCommentedPerMin, likesPerMin, sharesPerMin, viewerHours, viewerHoursPerMin)
+	VALUES 
+		(NEW.date, 
+		NEW.avgWatchTime::numeric / 60, 
+		NEW.totalViews::numeric / (NEW.liveDuration / 60),
+		NEW.uniqueViewers::numeric / (NEW.liveDuration / 60),
+		NEW.diamonds::numeric / (NEW.liveDuration / 60),
+		NEW.gifters::numeric / (NEW.liveDuration / 60),
+		NEW.diamonds::numeric / NEW.gifters,
+		NEW.uniqueViewers::numeric / NEW.gifters,
+		NEW.newFollowers::numeric / (NEW.liveDuration / 60),
+		NEW.viewersWhoCommented::numeric / (NEW.liveDuration / 60),
+		NEW.likes::numeric / (NEW.liveDuration / 60),
+		NEW.shares::numeric / (NEW.liveDuration / 60),
+		(NEW.uniqueViewers * (NEW.avgWatchTime::numeric / 60)) / 60,
+		((NEW.uniqueViewers * (NEW.avgWatchTime::numeric / 60)) / 60) / (NEW.liveDuration / 60))
+
+	ON CONFLICT (date) DO UPDATE
+
+	SET avgMinutesWatched = EXCLUDED.avgMinutesWatched,
+		totalViewsPerMin = EXCLUDED.totalViewsPerMin,
+		uniqueViewersPerMin = EXCLUDED.uniqueViewersPerMin,
+		diamondsPerMin = EXCLUDED.diamondsPerMin,
+		giftersPerMin = EXCLUDED.giftersPerMin,
+		diamondsPerGifter = EXCLUDED.diamondsPerGifter,
+		viewersPerGifter = EXCLUDED.viewersPerGifter,
+		newFollowersPerMin = EXCLUDED.newFollowersPerMin,
+		viewersWhoCommentedPerMin = EXCLUDED.viewersWhoCommentedPerMin,
+		likesPerMin = EXCLUDED.likesPerMin,
+		sharesPerMin = EXCLUDED.sharesPerMin,
+		viewerHours = EXCLUDED.viewerHours,
+		viewerHoursPerMin = EXCLUDED.viewerHoursPerMin;
+
+	RETURN NEW;
+END;
+$$;
+
+
+
+CREATE TRIGGER trigger_tikTokMetrics_rawData
+AFTER INSERT OR UPDATE OR DELETE ON tikTokRawData
+FOR EACH ROW
+EXECUTE PROCEDURE calculate_tikTokMetrics();
