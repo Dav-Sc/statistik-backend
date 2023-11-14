@@ -356,19 +356,19 @@ app.get('/createemptystream', async (req, res) => {
   // Extract the client ID from the query parameters.
   const clientid = req.query.id;
   const emptyDate = req.query.date;
- 
+
   // Log the received parameters for debugging purposes.
   //console.log('clientid:', clientid);
 
   try {
     // Fetch totalViews divided by (liveDuration/60) for the specified client ID.
-    
-    
+
+
     await client.query('INSERT INTO tikTokMaster (clientID, date) VALUES ($1, $2);', [clientid, emptyDate]);
     await client.query('INSERT INTO tikTokRawData  (date) VALUES ($1);', [emptyDate]);
     await client.query('INSERT INTO tikTokManualEntry  (date) VALUES ($1);', [emptyDate]);
     await client.query('INSERT INTO v  (date) VALUES ($1);', [emptyDate]);
-    
+
 
 
     // Send the fetched data as the response.
@@ -765,7 +765,7 @@ app.post('/upload', upload.array('files'), async (req, res) => {
 });
 
 
-const directoryPath = 'server\\public\\files';  // Adjust the path accordingly
+const directoryPath = path.join('server', 'public', 'files');  // Adjust the path accordingly
 
 /**
  * Unzips a specified file.
@@ -854,17 +854,17 @@ function extractFiles() {
 
       try {
         for (const zipFile of zipFiles) {
-          const filePath = `${directoryPath}\\${zipFile}`;
-          const extractPath = `${directoryPath}`;
-
+          const filePath = path.join(directoryPath, zipFile);
+          const extractPath = directoryPath;
+      
           await unzipFile(filePath, extractPath);
           console.log(`Successfully unzipped ${zipFile}`);
-          deleteFile(filePath);
+          await deleteFile(filePath);
         }
-        resolve();  // Resolve the Promise when all zip files are processed.
+        resolve();
       } catch (error) {
-        console.error(`Failed to unzip a file: ${error.message}`);
-        reject(error);  // Reject the Promise if there's an error unzipping.
+        console.error(`Failed to process zip files: ${error.message}`);
+        reject(error);
       }
     });
   });
@@ -1038,7 +1038,8 @@ async function updateAllData(clientId) {
 
 async function updateMasterCreationData(clientId) {
   try {
-    const data = await readCSV('server//public//files//LIVE_creation.csv');
+    const csvFilePath = path.join('server', 'public', 'files', 'LIVE_creation.csv');
+    const data = await readCSV(csvFilePath);
     await insertStreamMaster(data, clientId);
     await insertCreation(data);
   } catch (err) {
@@ -1048,7 +1049,8 @@ async function updateMasterCreationData(clientId) {
 
 async function updateEarningData() {
   try {
-    const data = await readCSV('server//public//files//LIVE_earning.csv');
+    const csvFilePath = path.join('server', 'public', 'files', 'LIVE_earning.csv');
+    const data = await readCSV(csvFilePath);
     await insertEarning(data);
   } catch (err) {
     console.error('Error processing CSV:', err);
@@ -1057,7 +1059,8 @@ async function updateEarningData() {
 
 async function updateInteractionData() {
   try {
-    const data = await readCSV('server//public//files//LIVE_interaction.csv');
+    const csvFilePath = path.join('server', 'public', 'files', 'LIVE_interaction.csv');
+    const data = await readCSV(csvFilePath);
     await insertInteractions(data);
   } catch (err) {
     console.error('Error processing CSV:', err);
@@ -1066,7 +1069,8 @@ async function updateInteractionData() {
 
 async function updateViewerData() {
   try {
-    const data = await readCSV('server//public//files//LIVE_viewer.csv');
+    const csvFilePath = path.join('server', 'public', 'files', 'LIVE_viewer.csv');
+    const data = await readCSV(csvFilePath);
     await insertViewer(data);
   } catch (err) {
     console.error('Error processing CSV:', err);
