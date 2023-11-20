@@ -23,11 +23,11 @@ const app = express();
 app.use(cors());
 
 const client = new Client({
-  host: "localhost",
+  host: "statistik-db",
   user: "postgres",
   port: 5432,
-  password: "root",
-  database: "Statistik",
+  password: "postgres",
+  database: "postgres",
 });
 
 client.connect();
@@ -367,7 +367,7 @@ app.get('/createemptystream', async (req, res) => {
     await client.query('INSERT INTO tikTokMaster (clientID, date) VALUES ($1, $2);', [clientid, emptyDate]);
     await client.query('INSERT INTO tikTokRawData  (date) VALUES ($1);', [emptyDate]);
     await client.query('INSERT INTO tikTokManualEntry  (date) VALUES ($1);', [emptyDate]);
-    await client.query('INSERT INTO v  (date) VALUES ($1);', [emptyDate]);
+    //await client.query('INSERT INTO v  (date) VALUES ($1);', [emptyDate]);
 
 
 
