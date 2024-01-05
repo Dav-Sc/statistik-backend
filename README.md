@@ -4,7 +4,7 @@
 
 Backend for StatisTik, an analytics platform for TikTok. 
 
-StatisTik, is an analytics platform for TikTok. Part of the USF B.S.I.Y Senior Project at the University of South Florida. Built with my peers: Brendan Howell, Eddie Roock, and Gilberto Rios
+StatisTik, is an analytics platform for TikTok. Part of the USF B.S.I.T/C.S Senior Project at the University of South Florida. Built with my peers: Brendan Howell, Eddie Roock, and Gilberto Rios
 
 This application is designed to help production managers who manage multiple tiktok accounts for clients. Built on Node.JS and React.
 
